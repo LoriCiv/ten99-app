@@ -1,3 +1,4 @@
+// Final version
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -24,7 +25,7 @@ export default async function handler(request, response) {
 
     try {
       // Call the AI model
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const prompt = `From the following email text, extract the client's name, the proposed meeting date and time, and the subject of the meeting. Respond with only a valid JSON object. For example: {"clientName": "John Doe", "dateTime": "2025-07-10T14:00:00Z", "subject": "Initial Consultation"}. Email Text: "${emailText}"`;
       
       const result = await model.generateContent(prompt);
