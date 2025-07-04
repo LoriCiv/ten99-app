@@ -1,5 +1,19 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { kv } from "@vercel/kv"; // Import the Vercel KV library
+import admin from 'firebase-admin'; // Import the Firebase Admin library
+
+// --- Initialize Firebase Admin ---
+// Decode the base64 service account key from the environment variable
+const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf-8'));
+
+// Initialize Firebase only if it hasn't been already
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
+const firestore = admin.firestore();
+// --- End of Firebase Init ---
+
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -26,18 +40,24 @@ export default async function handler(request, response) {
       const prompt = `From the following email text, extract the client's name, the proposed meeting date and time, and the subject of the meeting. Respond with only a valid JSON object. For example: {"clientName": "John Doe", "dateTime": "2025-07-10T14:00:00Z", "subject": "Initial Consultation"}. Email Text: "${emailText}"`;
       
       const result = await model.generateContent(prompt);
-      const aiResponse = await result.response;
-      const text = aiResponse.text();
+      const aiResponseText = result.response.text();
       
-      // 2. Save the result to the database
-      const appointmentId = `appt:${Date.now()}`; // Create a unique ID for the appointment
-      await kv.set(appointmentId, text); // Save the AI's response using the ID
+      // Clean up the AI's response to make sure it's valid JSON
+      const cleanedJsonString = aiResponseText.replace(/```json\n|\n```/g, '');
+      const appointmentData = JSON.parse(cleanedJsonString);
 
-      // 3. Send the AI's answer and the new ID back
+      // 2. Save the structured data to Firestore
+      const docRef = await firestore.collection('pendingAppointments').add({
+        ...appointmentData,
+        status: 'pending', // Add a status field
+        createdAt: admin.firestore.FieldValue.serverTimestamp() // Add a timestamp
+      });
+
+      // 3. Send a success response
       return response.status(200).json({ 
-        message: "Successfully extracted and saved appointment.",
-        appointmentId: appointmentId,
-        aiResponse: text 
+        message: "Successfully saved appointment to Firestore.",
+        appointmentId: docRef.id, // The new document ID from Firestore
+        data: appointmentData
       });
 
     } catch (error) {
