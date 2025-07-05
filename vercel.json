@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/accept.js": {
+      "maxDuration": 15
+    },
+    "api/decline.js": {
+      "maxDuration": 15
+    }
+  }
+}
