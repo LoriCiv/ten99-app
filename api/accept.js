@@ -37,11 +37,18 @@ export default async function handler(request, response) {
 
       const appointmentData = pendingDoc.data();
 
-      // Move data to the new collection
-      await firestore.collection('confirmedAppointments').doc(appointmentId).set(appointmentData);
+      // --- Create a batch to perform multiple operations at once ---
+      const batch = firestore.batch();
 
-      // Delete the original document
-      await pendingDocRef.delete();
+      // 1. Create the new document in 'confirmedAppointments'
+      const confirmedDocRef = firestore.collection('confirmedAppointments').doc(appointmentId);
+      batch.set(confirmedDocRef, appointmentData);
+
+      // 2. Delete the old document from 'pendingAppointments'
+      batch.delete(pendingDocRef);
+
+      // --- Commit the batch ---
+      await batch.commit(); // This sends both operations at once, which is much faster
 
       return response.status(200).json({ message: `Successfully accepted and moved appointment ${appointmentId}` });
 
