@@ -1,7 +1,18 @@
 {
+  "name": "ten99-app",
+  "version": "1.0.0",
+  "description": "Serverless functions for Ten99",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@sendgrid/mail": "^8.1.5",
-    "@vercel/kv": "^3.0.0",
-    "firebase-admin": "^13.4.0"
+    "@google/generative-ai": "^0.15.0",
+    "@sendgrid/mail": "^8.1.3",
+    "@vercel/kv": "^2.0.0",
+    "firebase-admin": "^12.1.0"
   }
 }
